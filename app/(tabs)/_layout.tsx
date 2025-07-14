@@ -1,43 +1,104 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
-
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import { ShoppingCart, Store, Truck, User, Chrome as Home, MessageCircle, Gamepad2 } from 'lucide-react-native';
+import { useUser } from '@/hooks/useUser';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  const { user } = useUser();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            // Use a transparent background on iOS to show the blur effect
-            position: 'absolute',
-          },
-          default: {},
-        }),
+        tabBarStyle: {
+          backgroundColor: '#ffffff',
+          borderTopWidth: 1,
+          borderTopColor: '#e5e7eb',
+          paddingBottom: 8,
+          paddingTop: 8,
+          height: 70,
+        },
+        tabBarActiveTintColor: '#10B981',
+        tabBarInactiveTintColor: '#6b7280',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '500',
+        },
       }}>
+      
       <Tabs.Screen
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ size, color }) => (
+            <Home size={size} color={color} />
+          ),
         }}
       />
+      
+      {user?.role === 'buyer' && (
+        <>
+          <Tabs.Screen
+            name="browse"
+            options={{
+              title: 'Browse',
+              tabBarIcon: ({ size, color }) => (
+                <ShoppingCart size={size} color={color} />
+              ),
+            }}
+          />
+          <Tabs.Screen
+            name="games"
+            options={{
+              title: 'Games',
+              tabBarIcon: ({ size, color }) => (
+                <Gamepad2 size={size} color={color} />
+              ),
+            }}
+          />
+        </>
+      )}
+      
+      {user?.role === 'seller' && (
+        <Tabs.Screen
+          name="seller"
+          options={{
+            title: 'My Store',
+            tabBarIcon: ({ size, color }) => (
+              <Store size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+      
+      {user?.role === 'rider' && (
+        <Tabs.Screen
+          name="rider"
+          options={{
+            title: 'Deliveries',
+            tabBarIcon: ({ size, color }) => (
+              <Truck size={size} color={color} />
+            ),
+          }}
+        />
+      )}
+      
       <Tabs.Screen
-        name="explore"
+        name="chat"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Chat',
+          tabBarIcon: ({ size, color }) => (
+            <MessageCircle size={size} color={color} />
+          ),
+        }}
+      />
+      
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ size, color }) => (
+            <User size={size} color={color} />
+          ),
         }}
       />
     </Tabs>
