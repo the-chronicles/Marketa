@@ -1,72 +1,35 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { useEffect } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useUser } from '@/hooks/useUser';
 import { router } from 'expo-router';
 
-export default function WelcomeScreen() {
-  const { user, loading } = useUser();
-
+export default function SplashScreen() {
   useEffect(() => {
-    if (!loading) {
-      if (user) {
-        // Navigate based on user role
-        switch (user.role) {
-          case 'buyer':
-            router.replace('/(buyer)');
-            break;
-          case 'seller':
-            router.replace('/(seller)');
-            break;
-          case 'rider':
-            router.replace('/(rider)');
-            break;
-          default:
-            router.replace('/auth');
-        }
-      } else {
-        const timer = setTimeout(() => {
-          router.replace('/auth');
-        }, 3000);
-        return () => clearTimeout(timer);
-      }
-    }
-  }, [user, loading]);
+    const timer = setTimeout(() => {
+      router.replace('/onboarding');
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
-        <Text style={styles.logo}>🍕 Marketa</Text>
-        <Text style={styles.tagline}>Your Campus Food Delivery</Text>
-        <Text style={styles.subtitle}>
-          Order delicious food from your favorite campus vendors at University of Ibadan
-        </Text>
-        
-        <View style={styles.features}>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>🍚</Text>
-            <Text style={styles.featureText}>Jollof Rice & Local Dishes</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>🚴‍♂️</Text>
-            <Text style={styles.featureText}>Fast Campus Delivery</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>🎮</Text>
-            <Text style={styles.featureText}>Games While You Wait</Text>
-          </View>
-          <View style={styles.featureItem}>
-            <Text style={styles.featureIcon}>💰</Text>
-            <Text style={styles.featureText}>Student-Friendly Prices</Text>
-          </View>
+        <View style={styles.logoContainer}>
+          <Text style={styles.logo}>🍕 Marketa</Text>
+          <Text style={styles.tagline}>Your Campus Food Delivery</Text>
         </View>
-
-        <TouchableOpacity 
-          style={styles.getStartedButton}
-          onPress={() => router.push('/auth')}
-        >
-          <Text style={styles.getStartedText}>Get Started</Text>
-        </TouchableOpacity>
+        
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingBar}>
+            <View style={styles.loadingFill} />
+          </View>
+          <Text style={styles.loadingText}>Loading delicious food...</Text>
+        </View>
+      </View>
+      
+      <View style={styles.footer}>
+        <Text style={styles.footerText}>University of Ibadan</Text>
       </View>
     </SafeAreaView>
   );
@@ -75,65 +38,60 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#10b981',
   },
   content: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    paddingHorizontal: 20,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 60,
   },
   logo: {
     fontSize: 48,
     fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 16,
-  },
-  tagline: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: '#000',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
-    marginBottom: 48,
-    lineHeight: 24,
-  },
-  features: {
-    width: '100%',
-    marginBottom: 48,
-  },
-  featureItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
-    borderRadius: 12,
-    padding: 16,
+    color: '#ffffff',
     marginBottom: 12,
   },
-  featureIcon: {
-    fontSize: 24,
-    marginRight: 16,
-  },
-  featureText: {
-    fontSize: 16,
-    color: '#000',
-    fontWeight: '500',
-  },
-  getStartedButton: {
-    backgroundColor: '#10b981',
-    borderRadius: 12,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    minWidth: 200,
-    alignItems: 'center',
-  },
-  getStartedText: {
-    color: '#ffffff',
+  tagline: {
     fontSize: 18,
-    fontWeight: '600',
+    color: '#ffffff',
+    opacity: 0.9,
+    textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    width: '100%',
+  },
+  loadingBar: {
+    width: '60%',
+    height: 4,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    borderRadius: 2,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  loadingFill: {
+    height: '100%',
+    backgroundColor: '#ffffff',
+    borderRadius: 2,
+    width: '70%',
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#ffffff',
+    opacity: 0.8,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingBottom: 40,
+  },
+  footerText: {
+    fontSize: 14,
+    color: '#ffffff',
+    opacity: 0.7,
   },
 });
