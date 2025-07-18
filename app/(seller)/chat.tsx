@@ -55,7 +55,7 @@ export default function SellerChatScreen() {
     },
     {
       id: 5,
-      name: 'Marketa Support',
+      name: 'Omnimarketa Support',
       lastMessage: 'How can we help improve your food business?',
       time: '1 hour ago',
       unread: 0,

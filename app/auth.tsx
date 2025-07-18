@@ -1,8 +1,11 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Image } from 'react-native';
-import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from '@/config/firebaseConfig';
 import { useUser } from '@/hooks/useUser';
 import { router } from 'expo-router';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
+import { useState } from 'react';
+import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function AuthScreen() {
   const { login } = useUser();
@@ -20,37 +23,148 @@ export default function AuthScreen() {
     { id: 'rider', title: 'Delivery Rider', description: 'Deliver food to students', icon: '🚴‍♂️' },
   ];
 
-  const handleAuth = () => {
-    // Demo authentication - use demo data based on role
-    const demoUsers = {
-      buyer: {
-        id: '1',
-        name: 'John Doe',
-        email: 'john.doe@ui.edu.ng',
-        role: 'buyer' as const,
-        verified: true,
-      },
-      seller: {
-        id: '2',
-        name: 'Mama Simi Kitchen',
-        email: 'mamasimi@ui.edu.ng',
-        role: 'seller' as const,
-        verified: true,
-      },
-      rider: {
-        id: '3',
-        name: 'Delivery Mike',
-        email: 'mike.rider@ui.edu.ng',
-        role: 'rider' as const,
-        verified: true,
-      }
-    };
+  const db = getFirestore();
 
-    const userData = demoUsers[formData.role];
-    login(userData);
+  // const handleAuth = () => {
+  //   // Demo authentication - use demo data based on role
+  //   const demoUsers = {
+  //     buyer: {
+  //       id: '1',
+  //       name: 'John Doe',
+  //       email: 'john.doe@ui.edu.ng',
+  //       role: 'buyer' as const,
+  //       verified: true,
+  //     },
+  //     seller: {
+  //       id: '2',
+  //       name: 'Mama Simi Kitchen',
+  //       email: 'mamasimi@ui.edu.ng',
+  //       role: 'seller' as const,
+  //       verified: true,
+  //     },
+  //     rider: {
+  //       id: '3',
+  //       name: 'Delivery Mike',
+  //       email: 'mike.rider@ui.edu.ng',
+  //       role: 'rider' as const,
+  //       verified: true,
+  //     }
+  //   };
+
+  //   const userData = demoUsers[formData.role];
+  //   login(userData);
     
+  //   // Navigate based on role
+  //   switch (formData.role) {
+  //     case 'buyer':
+  //       router.replace('/(buyer)');
+  //       break;
+  //     case 'seller':
+  //       router.replace('/(seller)');
+  //       break;
+  //     case 'rider':
+  //       router.replace('/(rider)');
+  //       break;
+  //   }
+  // };
+
+
+//   const handleAuth = async () => {
+//   try {
+//     let userCredential;
+
+//     if (isLogin) {
+//       // LOGIN flow
+//       userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+//     } else {
+//       // SIGN UP flow
+//       userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      
+//       const firebaseUser = userCredential.user;
+
+//       // 🔥 Save additional user info to Firestore
+//       await setDoc(doc(db, 'users', firebaseUser.uid), {
+//         name: formData.name,
+//         role: formData.role,
+//         email: firebaseUser.email,
+//       });
+//     }
+
+//     const firebaseUser = userCredential.user;
+
+//     login({
+//       id: firebaseUser.uid,
+//       name: formData.name || firebaseUser.email || 'User',
+//       email: firebaseUser.email || '',
+//       role: formData.role,
+//       verified: firebaseUser.emailVerified,
+//     });
+
+//     // Navigate based on role
+//     switch (formData.role) {
+//       case 'buyer':
+//         router.replace('/(buyer)');
+//         break;
+//       case 'seller':
+//         router.replace('/(seller)');
+//         break;
+//       case 'rider':
+//         router.replace('/(rider)');
+//         break;
+//     }
+
+//   } catch (error: any) {
+//     console.log('Authentication error:', error.message);
+//     alert(error.message);
+//   }
+// };
+
+
+
+const handleAuth = async () => {
+  try {
+    let userCredential;
+
+    if (isLogin) {
+      userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
+    } else {
+      // Sign up new user
+      userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+
+      // Save name and role to Firestore
+      const userRef = doc(db, 'users', userCredential.user.uid);
+      await setDoc(userRef, {
+        name: formData.name,
+        role: formData.role,
+        email: formData.email,
+      });
+    }
+
+    // Fetch name and role from Firestore (works for both login and signup)
+    const userRef = doc(db, 'users', userCredential.user.uid);
+    const userSnap = await getDoc(userRef);
+
+    const userDataFromFirestore = userSnap.exists() ? userSnap.data() : {};
+
+    // login({
+    //   id: userCredential.user.uid,
+    //   name: userDataFromFirestore.name || formData.name || 'User',
+    //   email: userCredential.user.email || '',
+    //   role: userDataFromFirestore.role || formData.role,
+    //   verified: userCredential.user.emailVerified,
+    // });
+
+    login({
+  id: userCredential.user.uid,
+  name: userDataFromFirestore.name || 'User',
+  email: userCredential.user.email || '',
+  role: userDataFromFirestore.role || 'buyer',
+  verified: userCredential.user.emailVerified,
+});
+
+
     // Navigate based on role
-    switch (formData.role) {
+    switch (userDataFromFirestore.role || formData.role) {
       case 'buyer':
         router.replace('/(buyer)');
         break;
@@ -61,12 +175,16 @@ export default function AuthScreen() {
         router.replace('/(rider)');
         break;
     }
-  };
 
+  } catch (error: any) {
+    console.error('Authentication Error:', error.message);
+    alert(error.message);
+  }
+};
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🍕 Marketa</Text>
+        <Text style={styles.logo}>🍕 Omnimarketa</Text>
         <Text style={styles.subtitle}>University of Ibadan Food Delivery</Text>
       </View>
 
@@ -139,11 +257,6 @@ export default function AuthScreen() {
             {isLogin ? 'Login' : 'Create Account'}
           </Text>
         </TouchableOpacity>
-
-        <View style={styles.demoContainer}>
-          <Text style={styles.demoTitle}>Demo Login:</Text>
-          <Text style={styles.demoText}>Just select your role and click login!</Text>
-        </View>
 
         <View style={styles.footer}>
           <Text style={styles.footerText}>
@@ -266,24 +379,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
-  },
-  demoContainer: {
-    backgroundColor: '#f0fdf4',
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#10b981',
-  },
-  demoTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#10b981',
-    marginBottom: 4,
-  },
-  demoText: {
-    fontSize: 14,
-    color: '#6b7280',
   },
   footer: {
     alignItems: 'center',

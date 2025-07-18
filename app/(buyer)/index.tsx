@@ -8,7 +8,7 @@ export default function BuyerHomeScreen() {
 
   const quickActions = [
     { id: 1, title: 'Flash Sales', icon: Zap, color: '#ef4444' },
-    { id: 2, title: 'Pooled Delivery', icon: Clock, color: '#f59e0b' },
+    { id: 2, title: 'Recipe Builder', icon: Clock, color: '#f59e0b' },
     { id: 3, title: 'Nearby Vendors', icon: MapPin, color: '#10b981' },
     { id: 4, title: 'Rewards', icon: Gift, color: '#8b5cf6' },
   ];

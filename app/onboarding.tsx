@@ -20,11 +20,11 @@ export default function OnboardingScreen() {
     },
     {
       id: 2,
-      title: 'Save Money with Pooled Delivery',
-      subtitle: 'Share Delivery Costs with Other Students',
-      description: 'Choose pooled delivery to split costs with other students ordering from the same area. Save money while helping the environment!',
+      title: 'Recipe Builder: What Do You Want To Cook?',
+      subtitle: 'Smart Ingredient Shopping Made Easy',
+      description: 'Select a dish like Jollof Rice and we\'ll show you all ingredients, quantities, and prices. Adjust items and place a complete order!',
       image: 'https://images.pexels.com/photos/4393021/pexels-photo-4393021.jpeg',
-      emoji: '🚴‍♂️'
+      emoji: '📝'
     },
     {
       id: 3,

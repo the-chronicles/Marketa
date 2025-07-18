@@ -51,7 +51,7 @@ export default function RiderChatScreen() {
     },
     {
       id: 5,
-      name: 'Marketa Support',
+      name: 'Omnimarketa Support',
       lastMessage: 'How can we help you with your deliveries today?',
       time: '1 hour ago',
       unread: 0,

@@ -16,7 +16,7 @@ export default function SplashScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🍕 Marketa</Text>
+          <Text style={styles.logo}>🍕 Omnimarketa</Text>
           <Text style={styles.tagline}>Your Campus Food Delivery</Text>
         </View>
         

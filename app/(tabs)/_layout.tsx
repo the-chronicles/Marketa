@@ -1,6 +1,6 @@
-import { Tabs } from 'expo-router';
-import { ShoppingCart, Store, Truck, User, Chrome as Home, MessageCircle, Gamepad2 } from 'lucide-react-native';
 import { useUser } from '@/hooks/useUser';
+import { Tabs } from 'expo-router';
+import { Gamepad2, Chrome as Home, MessageCircle, ShoppingCart, Store, Truck, User } from 'lucide-react-native';
 
 export default function TabLayout() {
   const { user } = useUser();

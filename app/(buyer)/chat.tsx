@@ -49,7 +49,7 @@ export default function ChatScreen() {
     },
     {
       id: 5,
-      name: 'Marketa Support',
+      name: 'Omnimarketa Support',
       lastMessage: 'How can we help you with your food order today?',
       time: 'Yesterday',
       unread: 0,
