@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Gamepad2, Chrome as Home, MessageCircle, ShoppingCart, User } from 'lucide-react-native';
+import { Gamepad2, House, MessageCircle, ShoppingCart, User } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native';
 
 export default function BuyerTabLayout() {
@@ -28,7 +28,7 @@ export default function BuyerTabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ size, color }) => (
-            <Home size={size} color={color} />
+            <House size={size} color={color} />
           ),
         }}
       />
