@@ -1,5 +1,6 @@
 import { useUser } from "@/hooks/useUser";
 import * as Location from "expo-location";
+import { collection, getFirestore, onSnapshot, query, where } from "firebase/firestore";
 import {
   Bell,
   Clock,
@@ -21,38 +22,52 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const featuredFood = [
-  {
-    id: 1,
-    name: "Jollof Rice & Chicken",
-    price: "₦1,500",
-    rating: 4.8,
-    image: "https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg",
-    vendor: "Mama Simi Kitchen",
-  },
-  {
-    id: 2,
-    name: "Amala & Ewedu",
-    price: "₦1,200",
-    rating: 4.6,
-    image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
-    vendor: "Buka Express",
-  },
-  {
-    id: 3,
-    name: "Fried Rice Special",
-    price: "₦1,800",
-    rating: 4.9,
-    image: "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg",
-    vendor: "Campus Delights",
-  },
-];
 
 export default function BuyerHomeScreen() {
   const { user } = useUser();
   const [locationName, setLocationName] = useState("University of Ibadan");
   const [searchText, setSearchText] = useState("");
-  const [filteredFood, setFilteredFood] = useState(featuredFood);
+  type Food = {
+    id: string;
+    name: string;
+    vendor: string;
+    image: string;
+    rating: number | string;
+    price: string;
+    // add other fields as needed
+  };
+
+  const [featuredFood, setFeaturedFood] = useState<Food[]>([]);
+  const [filteredFood, setFilteredFood] = useState<Food[]>([]);
+
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+  const db = getFirestore();
+  const q = query(
+    collection(db, "foods"),
+    where("isFeatured", "==", true)
+  );
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const fetched = snapshot.docs.map((doc) => ({
+      ...(doc.data() as Food),
+      id: doc.id,
+    }));
+
+    const top5 = fetched
+      .filter((item) => typeof item.rating === "number")
+      .sort((a, b) => Number(b.rating) - Number(a.rating))
+      .slice(0, 5);
+
+    setFeaturedFood(top5);
+    setFilteredFood(top5);
+    setIsLoading(false);
+  });
+
+  return () => unsubscribe();
+}, []);
+
 
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -119,24 +134,57 @@ export default function BuyerHomeScreen() {
               value={searchText}
               onChangeText={(text) => {
                 setSearchText(text);
-
                 const filtered = featuredFood.filter(
                   (item) =>
                     item.name.toLowerCase().includes(text.toLowerCase()) ||
                     item.vendor.toLowerCase().includes(text.toLowerCase())
                 );
-
                 setFilteredFood(filtered);
               }}
             />
           </View>
         </View>
 
-         {/* Featured Food */}
+        {/* Featured Food */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Popular Today</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {filteredFood.length > 0 ? (
+            {isLoading ? (
+              Array.from({ length: 3 }).map((_, i) => (
+                <View key={i} style={[styles.foodCard, { opacity: 0.5 }]}>
+                  <View
+                    style={[styles.foodImage, { backgroundColor: "#f3f4f6" }]}
+                  />
+                  <View style={{ padding: 12 }}>
+                    <View
+                      style={{
+                        height: 14,
+                        backgroundColor: "#e5e7eb",
+                        marginBottom: 6,
+                        borderRadius: 4,
+                      }}
+                    />
+                    <View
+                      style={{
+                        height: 12,
+                        backgroundColor: "#e5e7eb",
+                        marginBottom: 6,
+                        width: "60%",
+                        borderRadius: 4,
+                      }}
+                    />
+                    <View
+                      style={{
+                        height: 12,
+                        backgroundColor: "#e5e7eb",
+                        width: "40%",
+                        borderRadius: 4,
+                      }}
+                    />
+                  </View>
+                </View>
+              ))
+            ) : filteredFood.length > 0 ? (
               filteredFood.map((food) => (
                 <TouchableOpacity key={food.id} style={styles.foodCard}>
                   <Image
@@ -180,8 +228,6 @@ export default function BuyerHomeScreen() {
             ))}
           </View>
         </View>
-
-       
 
         {/* Order Status */}
         <View style={styles.orderStatusCard}>

@@ -42,15 +42,17 @@ export default function AddFoodScreen() {
   }
 
   const foodEntry = {
-    name: foodData.name,
-    price: foodData.price,
-    rating: 0,
-    category: foodData.category,
-    vendor: user.businessName || user.name,
-    image: selectedImage || '',
-    sellerId: user.id,
-    createdAt: Timestamp.now(),
-  };
+  name: foodData.name,
+  price: foodData.price,
+  rating: 0,
+  category: foodData.category,
+  vendor: user.businessName || user.name,
+  image: selectedImage || '',
+  sellerId: user.id,
+  createdAt: Timestamp.now(),
+  isFeatured: true, // ✅ Added field
+};
+
 
   try {
     // Save to /foods
