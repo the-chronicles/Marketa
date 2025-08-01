@@ -74,6 +74,23 @@ export default function SellerDashboardScreen() {
   const [myFoods, setMyFoods] = useState<Food[]>([]);
   const db = getFirestore();
   const { user } = useUser(); // Assuming user is logged in
+  const [loading, setLoading] = useState(true);
+
+  const MenuSkeleton = () => (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
+      {[...Array(3)].map((_, index) => (
+        <View
+          key={index}
+          style={{
+            width: "48%",
+            height: 160,
+            backgroundColor: "#f3f4f6",
+            borderRadius: 12,
+          }}
+        />
+      ))}
+    </View>
+  );
 
   useEffect(() => {
     if (!user?.id) return;
@@ -86,6 +103,7 @@ export default function SellerDashboardScreen() {
           ...doc.data(),
         }));
         setMyFoods(foodItems);
+        setLoading(false);
       },
       (error) => {
         console.error("Live update error:", error);
@@ -93,7 +111,7 @@ export default function SellerDashboardScreen() {
     );
 
     return () => unsubscribe(); // Cleanup listener
-  }, [user?.id]);
+  }, [user?.id, db]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -180,7 +198,9 @@ export default function SellerDashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.foodsGrid}>
-            {myFoods.length === 0 ? (
+            {loading ? (
+              <MenuSkeleton />
+            ) : myFoods.length === 0 ? (
               <Text style={styles.emptyStateText}>
                 You haven&apos;t added any food yet. 📭
               </Text>

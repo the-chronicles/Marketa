@@ -20,14 +20,29 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
-
 export default function BrowseFoodScreen() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredFoods, setFilteredFoods] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  const LoadingSkeleton = () => (
+    <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
+      {[...Array(4)].map((_, i) => (
+        <View
+          key={i}
+          style={{
+            width: "48%",
+            height: 200,
+            backgroundColor: "#f3f4f6",
+            borderRadius: 12,
+            marginBottom: 16,
+          }}
+        />
+      ))}
+    </View>
+  );
 
   const db = getFirestore();
 
@@ -40,6 +55,7 @@ export default function BrowseFoodScreen() {
       setFilteredFoods(
         applyFilters(fetchedFoods, searchText, selectedCategory)
       );
+      setLoading(false);
     });
 
     return () => unsubscribe(); // clean up
@@ -140,7 +156,11 @@ export default function BrowseFoodScreen() {
         contentContainerStyle={{ paddingBottom: 30 }}
         showsVerticalScrollIndicator={false}
       >
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.categoriesContainer}
+        >
           <TouchableOpacity
             key={"all"}
             style={[
@@ -221,14 +241,12 @@ export default function BrowseFoodScreen() {
         </View>
 
         {/* Foods */}
-        {/* <ScrollView
-        style={styles.foodsContainer}
-        showsVerticalScrollIndicator={false}
-      > */}
         <View
           style={[styles.foodsGrid, viewMode === "list" && styles.foodsList]}
         >
-          {filteredFoods.length > 0 ? (
+          {loading ? (
+            <LoadingSkeleton />
+          ) : filteredFoods.length > 0 ? (
             filteredFoods.map(renderFoodCard)
           ) : (
             <Text
@@ -282,10 +300,10 @@ const styles = StyleSheet.create({
     borderColor: "#10b981",
   },
   categoriesContainer: {
-  flexDirection: "row",
-  paddingHorizontal: 15,
-  paddingVertical: 15,
-},
+    flexDirection: "row",
+    paddingHorizontal: 15,
+    paddingVertical: 15,
+  },
 
   categoryCard: {
     alignItems: "center",
