@@ -1,5 +1,6 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { Camera, Plus, Package, Settings, Star, TrendingUp, Clock, DollarSign } from 'lucide-react-native';
+import { navigate } from 'expo-router/build/global-state/routing';
+import { Camera, Clock, DollarSign, Package, Plus, Settings, Star, TrendingUp } from 'lucide-react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SellerDashboardScreen() {
@@ -38,7 +39,7 @@ export default function SellerDashboardScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.primaryAction}>
+          <TouchableOpacity style={styles.primaryAction} onPress={() => navigate('/add-food')}>
             <Camera size={24} color="#fff" />
             <Text style={styles.primaryActionText}>📸 Snap & Add Food</Text>
           </TouchableOpacity>
@@ -50,7 +51,7 @@ export default function SellerDashboardScreen() {
 
         {/* Stats */}
         <View style={styles.statsContainer}>
-          <Text style={styles.sectionTitle}>Today's Performance</Text>
+          <Text style={styles.sectionTitle}>Today&apos;s Performance</Text>
           <View style={styles.statsGrid}>
             {stats.map((stat, index) => (
               <View key={index} style={styles.statCard}>

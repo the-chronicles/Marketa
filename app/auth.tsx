@@ -1,186 +1,150 @@
-import { auth } from '@/config/firebaseConfig';
-import { useUser } from '@/hooks/useUser';
-import { router } from 'expo-router';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, getDoc, getFirestore, setDoc } from 'firebase/firestore';
-import { useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { auth } from "@/config/firebaseConfig";
+import { useUser } from "@/hooks/useUser";
+import { router } from "expo-router";
+import { FirebaseError } from "firebase/app";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
+import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
+import { useState } from "react";
+import {
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Toast from "react-native-toast-message";
 
 export default function AuthScreen() {
   const { login } = useUser();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    role: 'buyer' as 'buyer' | 'seller' | 'rider',
+    name: "",
+    email: "",
+    password: "",
+    role: "buyer" as "buyer" | "seller" | "rider",
   });
+  const [loading, setLoading] = useState(false);
 
   const roles = [
-    { id: 'buyer', title: 'Student/Buyer', description: 'Order delicious food from campus', icon: '🍕' },
-    { id: 'seller', title: 'Food Vendor', description: 'Sell food to hungry students', icon: '👨‍🍳' },
-    { id: 'rider', title: 'Delivery Rider', description: 'Deliver food to students', icon: '🚴‍♂️' },
+    {
+      id: "buyer",
+      title: "Student/Buyer",
+      description: "Order delicious food from campus",
+      icon: "🍕",
+    },
+    {
+      id: "seller",
+      title: "Food Vendor",
+      description: "Sell food to hungry students",
+      icon: "👨‍🍳",
+    },
+    {
+      id: "rider",
+      title: "Delivery Rider",
+      description: "Deliver food to students",
+      icon: "🚴‍♂️",
+    },
   ];
 
   const db = getFirestore();
 
-  // const handleAuth = () => {
-  //   // Demo authentication - use demo data based on role
-  //   const demoUsers = {
-  //     buyer: {
-  //       id: '1',
-  //       name: 'John Doe',
-  //       email: 'john.doe@ui.edu.ng',
-  //       role: 'buyer' as const,
-  //       verified: true,
-  //     },
-  //     seller: {
-  //       id: '2',
-  //       name: 'Mama Simi Kitchen',
-  //       email: 'mamasimi@ui.edu.ng',
-  //       role: 'seller' as const,
-  //       verified: true,
-  //     },
-  //     rider: {
-  //       id: '3',
-  //       name: 'Delivery Mike',
-  //       email: 'mike.rider@ui.edu.ng',
-  //       role: 'rider' as const,
-  //       verified: true,
-  //     }
-  //   };
+  const handleAuth = async () => {
+    setLoading(true);
+    try {
+      let userCredential;
 
-  //   const userData = demoUsers[formData.role];
-  //   login(userData);
-    
-  //   // Navigate based on role
-  //   switch (formData.role) {
-  //     case 'buyer':
-  //       router.replace('/(buyer)');
-  //       break;
-  //     case 'seller':
-  //       router.replace('/(seller)');
-  //       break;
-  //     case 'rider':
-  //       router.replace('/(rider)');
-  //       break;
-  //   }
-  // };
+      if (isLogin) {
+        userCredential = await signInWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
+      } else {
+        // Sign up new user
+        userCredential = await createUserWithEmailAndPassword(
+          auth,
+          formData.email,
+          formData.password
+        );
 
+        // Save name and role to Firestore
+        const userRef = doc(db, "users", userCredential.user.uid);
+        await setDoc(userRef, {
+          name: formData.name,
+          role: formData.role,
+          email: formData.email,
+        });
+      }
 
-//   const handleAuth = async () => {
-//   try {
-//     let userCredential;
+      // Fetch name and role from Firestore (works for both login and signup)
+      const userRef = doc(db, "users", userCredential.user.uid);
+      const userSnap = await getDoc(userRef);
 
-//     if (isLogin) {
-//       // LOGIN flow
-//       userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-//     } else {
-//       // SIGN UP flow
-//       userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      
-//       const firebaseUser = userCredential.user;
+      const userDataFromFirestore = userSnap.exists() ? userSnap.data() : {};
 
-//       // 🔥 Save additional user info to Firestore
-//       await setDoc(doc(db, 'users', firebaseUser.uid), {
-//         name: formData.name,
-//         role: formData.role,
-//         email: firebaseUser.email,
-//       });
-//     }
+      login({
+        id: userCredential.user.uid,
+        name: userDataFromFirestore.name || "User",
+        email: userCredential.user.email || "",
+        role: userDataFromFirestore.role || "buyer",
+        verified: userCredential.user.emailVerified,
+      });
 
-//     const firebaseUser = userCredential.user;
+      Toast.show({
+        type: "success",
+        text1: isLogin ? "Login successful" : "Account created",
+        text2: "Redirecting...",
+      });
 
-//     login({
-//       id: firebaseUser.uid,
-//       name: formData.name || firebaseUser.email || 'User',
-//       email: firebaseUser.email || '',
-//       role: formData.role,
-//       verified: firebaseUser.emailVerified,
-//     });
+      // Navigate based on role
+      switch (userDataFromFirestore.role || formData.role) {
+        case "buyer":
+          router.replace("/(buyer)");
+          break;
+        case "seller":
+          router.replace("/(seller)");
+          break;
+        case "rider":
+          router.replace("/(rider)");
+          break;
+      }
+    } catch (error: any) {
+      console.error("Authentication Error:", error.message);
 
-//     // Navigate based on role
-//     switch (formData.role) {
-//       case 'buyer':
-//         router.replace('/(buyer)');
-//         break;
-//       case 'seller':
-//         router.replace('/(seller)');
-//         break;
-//       case 'rider':
-//         router.replace('/(rider)');
-//         break;
-//     }
+      let message = "Something went wrong. Try again.";
 
-//   } catch (error: any) {
-//     console.log('Authentication error:', error.message);
-//     alert(error.message);
-//   }
-// };
+      if (error instanceof FirebaseError) {
+        switch (error.code) {
+          case "auth/email-already-in-use":
+            message = "That email is already in use.";
+            break;
+          case "auth/invalid-email":
+            message = "Invalid email address.";
+            break;
+          case "auth/user-not-found":
+            message = "No account found with that email.";
+            break;
+          case "auth/wrong-password":
+            message = "Incorrect password.";
+            break;
+          case "auth/weak-password":
+            message = "Password should be at least 6 characters.";
+            break;
+        }
+      }
 
-
-
-const handleAuth = async () => {
-  try {
-    let userCredential;
-
-    if (isLogin) {
-      userCredential = await signInWithEmailAndPassword(auth, formData.email, formData.password);
-    } else {
-      // Sign up new user
-      userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-
-      // Save name and role to Firestore
-      const userRef = doc(db, 'users', userCredential.user.uid);
-      await setDoc(userRef, {
-        name: formData.name,
-        role: formData.role,
-        email: formData.email,
+      Toast.show({
+        type: "error",
+        text1: "Authentication Failed",
+        text2: message,
       });
     }
-
-    // Fetch name and role from Firestore (works for both login and signup)
-    const userRef = doc(db, 'users', userCredential.user.uid);
-    const userSnap = await getDoc(userRef);
-
-    const userDataFromFirestore = userSnap.exists() ? userSnap.data() : {};
-
-    // login({
-    //   id: userCredential.user.uid,
-    //   name: userDataFromFirestore.name || formData.name || 'User',
-    //   email: userCredential.user.email || '',
-    //   role: userDataFromFirestore.role || formData.role,
-    //   verified: userCredential.user.emailVerified,
-    // });
-
-    login({
-  id: userCredential.user.uid,
-  name: userDataFromFirestore.name || 'User',
-  email: userCredential.user.email || '',
-  role: userDataFromFirestore.role || 'buyer',
-  verified: userCredential.user.emailVerified,
-});
-
-
-    // Navigate based on role
-    switch (userDataFromFirestore.role || formData.role) {
-      case 'buyer':
-        router.replace('/(buyer)');
-        break;
-      case 'seller':
-        router.replace('/(seller)');
-        break;
-      case 'rider':
-        router.replace('/(rider)');
-        break;
-    }
-
-  } catch (error: any) {
-    console.error('Authentication Error:', error.message);
-    alert(error.message);
-  }
-};
+    setLoading(false);
+  };
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -194,13 +158,17 @@ const handleAuth = async () => {
             style={[styles.tab, isLogin && styles.activeTab]}
             onPress={() => setIsLogin(true)}
           >
-            <Text style={[styles.tabText, isLogin && styles.activeTabText]}>Login</Text>
+            <Text style={[styles.tabText, isLogin && styles.activeTabText]}>
+              Login
+            </Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, !isLogin && styles.activeTab]}
             onPress={() => setIsLogin(false)}
           >
-            <Text style={[styles.tabText, !isLogin && styles.activeTabText]}>Sign Up</Text>
+            <Text style={[styles.tabText, !isLogin && styles.activeTabText]}>
+              Sign Up
+            </Text>
           </TouchableOpacity>
         </View>
 
@@ -238,9 +206,11 @@ const handleAuth = async () => {
                 key={role.id}
                 style={[
                   styles.roleCard,
-                  formData.role === role.id && styles.selectedRole
+                  formData.role === role.id && styles.selectedRole,
                 ]}
-                onPress={() => setFormData({ ...formData, role: role.id as any })}
+                onPress={() =>
+                  setFormData({ ...formData, role: role.id as any })
+                }
               >
                 <Text style={styles.roleIcon}>{role.icon}</Text>
                 <View style={styles.roleInfo}>
@@ -252,9 +222,19 @@ const handleAuth = async () => {
           </View>
         )}
 
-        <TouchableOpacity style={styles.authButton} onPress={handleAuth}>
+        <TouchableOpacity
+          style={[styles.authButton, loading && { opacity: 0.6 }]}
+          onPress={handleAuth}
+          disabled={loading}
+        >
           <Text style={styles.authButtonText}>
-            {isLogin ? 'Login' : 'Create Account'}
+            {loading
+              ? isLogin
+                ? "Logging in..."
+                : "Creating Account..."
+              : isLogin
+              ? "Login"
+              : "Create Account"}
           </Text>
         </TouchableOpacity>
 
@@ -271,32 +251,32 @@ const handleAuth = async () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   header: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingTop: 40,
     paddingBottom: 30,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   logo: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#10b981',
+    fontWeight: "bold",
+    color: "#10b981",
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
   },
   form: {
     flex: 1,
     padding: 20,
   },
   tabContainer: {
-    flexDirection: 'row',
-    backgroundColor: '#f3f4f6',
+    flexDirection: "row",
+    backgroundColor: "#f3f4f6",
     borderRadius: 8,
     marginBottom: 24,
     padding: 4,
@@ -304,52 +284,52 @@ const styles = StyleSheet.create({
   tab: {
     flex: 1,
     paddingVertical: 12,
-    alignItems: 'center',
+    alignItems: "center",
     borderRadius: 6,
   },
   activeTab: {
-    backgroundColor: '#10b981',
+    backgroundColor: "#10b981",
   },
   tabText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#6b7280',
+    fontWeight: "600",
+    color: "#6b7280",
   },
   activeTabText: {
-    color: '#ffffff',
+    color: "#ffffff",
   },
   input: {
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
   },
   roleContainer: {
     marginBottom: 24,
   },
   roleTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 16,
   },
   roleCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#f9fafb',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#f9fafb",
     borderRadius: 8,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#e5e7eb',
+    borderColor: "#e5e7eb",
   },
   selectedRole: {
-    borderColor: '#10b981',
-    backgroundColor: '#f0fdf4',
+    borderColor: "#10b981",
+    backgroundColor: "#f0fdf4",
   },
   roleIcon: {
     fontSize: 32,
@@ -360,33 +340,33 @@ const styles = StyleSheet.create({
   },
   roleCardTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 4,
   },
   roleDescription: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   authButton: {
-    backgroundColor: '#10b981',
+    backgroundColor: "#10b981",
     borderRadius: 8,
     paddingVertical: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 24,
   },
   authButtonText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   footer: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   footerText: {
     fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
     lineHeight: 18,
   },
 });

@@ -1,8 +1,10 @@
 import { Tabs } from 'expo-router';
-import { ChefHat, Gamepad2, Chrome as Home, MessageCircle, ShoppingCart, User } from 'lucide-react-native';
+import { Gamepad2, Chrome as Home, MessageCircle, ShoppingCart, User } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native';
 
 export default function BuyerTabLayout() {
   return (
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -11,8 +13,6 @@ export default function BuyerTabLayout() {
           borderTopWidth: 1,
           borderTopColor: '#e5e7eb',
           paddingBottom: 8,
-          // paddingTop: 8,
-          // height: 70,
         },
         tabBarActiveTintColor: '#10B981',
         tabBarInactiveTintColor: '#6b7280',
@@ -20,6 +20,7 @@ export default function BuyerTabLayout() {
           fontSize: 12,
           fontWeight: '500',
         },
+        tabBarHideOnKeyboard: true
       }}>
       
       <Tabs.Screen
@@ -38,16 +39,6 @@ export default function BuyerTabLayout() {
           title: 'Browse Food',
           tabBarIcon: ({ size, color }) => (
             <ShoppingCart size={size} color={color} />
-          ),
-        }}
-      />
-      
-      <Tabs.Screen
-        name="recipe-builder"
-        options={{
-          title: 'Recipes',
-          tabBarIcon: ({ size, color }) => (
-            <ChefHat size={size} color={color} />
           ),
         }}
       />
@@ -82,5 +73,6 @@ export default function BuyerTabLayout() {
         }}
       />
     </Tabs>
+    </SafeAreaView>
   );
 }

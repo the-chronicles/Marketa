@@ -1,7 +1,7 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { useEffect } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { useEffect } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SplashScreen() {
   useEffect(() => {
@@ -16,7 +16,7 @@ export default function SplashScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.content}>
         <View style={styles.logoContainer}>
-          <Text style={styles.logo}>🍕 Omnimarketa</Text>
+          <Text style={styles.logo}>Omnimarketa</Text>
           <Text style={styles.tagline}>Your Campus Food Delivery</Text>
         </View>
         
