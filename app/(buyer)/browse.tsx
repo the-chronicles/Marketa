@@ -1,3 +1,4 @@
+import { collection, getFirestore, onSnapshot } from "firebase/firestore";
 import {
   Filter,
   Grid2x2 as Grid,
@@ -7,7 +8,7 @@ import {
   ShoppingCart,
   Star,
 } from "lucide-react-native";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Image,
   ScrollView,
@@ -19,76 +20,40 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-const foods = [
-  {
-    id: 1,
-    name: "Jollof Rice & Chicken",
-    price: "₦1,500",
-    rating: 4.8,
-    image: "https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg",
-    vendor: "Mama Simi Kitchen",
-    category: "Grains",
-  },
-  {
-    id: 2,
-    name: "Amala & Ewedu",
-    price: "₦1,200",
-    rating: 4.6,
-    image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
-    vendor: "Buka Express",
-    category: "Swallow",
-  },
-  {
-    id: 3,
-    name: "Fried Rice Special",
-    price: "₦1,800",
-    rating: 4.9,
-    image: "https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg",
-    vendor: "Campus Delights",
-    category: "Grains",
-  },
-  {
-    id: 4,
-    name: "Pounded Yam & Egusi",
-    price: "₦1,600",
-    rating: 4.7,
-    image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
-    vendor: "Mama Cass Kitchen",
-    category: "Swallow",
-  },
-  {
-    id: 5,
-    name: "Meat Pie",
-    price: "₦400",
-    rating: 4.3,
-    image: "https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg",
-    vendor: "Snack Corner",
-    category: "Snacks",
-  },
-  {
-    id: 6,
-    name: "Coconut Rice",
-    price: "₦1,400",
-    rating: 4.5,
-    image: "https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg",
-    vendor: "Tropical Taste",
-    category: "Grains",
-  },
-];
+
 
 export default function BrowseFoodScreen() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchText, setSearchText] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [filteredFoods, setFilteredFoods] = useState(foods);
+  const [filteredFoods, setFilteredFoods] = useState<any[]>([]);
 
-  const handleSearch = (text: string) => {
-    setSearchText(text);
 
-    const filtered = foods.filter((food) => {
+  const db = getFirestore();
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "foods"), (snapshot) => {
+      const fetchedFoods = snapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setFilteredFoods(
+        applyFilters(fetchedFoods, searchText, selectedCategory)
+      );
+    });
+
+    return () => unsubscribe(); // clean up
+  }, [db, searchText, selectedCategory]);
+
+  const applyFilters = (
+    foods: any[],
+    searchText: string,
+    selectedCategory: string | null
+  ) => {
+    return foods.filter((food) => {
       const matchesText =
-        food.name.toLowerCase().includes(text.toLowerCase()) ||
-        food.vendor.toLowerCase().includes(text.toLowerCase());
+        food.name.toLowerCase().includes(searchText.toLowerCase()) ||
+        food.vendor.toLowerCase().includes(searchText.toLowerCase());
 
       const matchesCategory = selectedCategory
         ? food.category.toLowerCase() === selectedCategory.toLowerCase()
@@ -96,26 +61,16 @@ export default function BrowseFoodScreen() {
 
       return matchesText && matchesCategory;
     });
+  };
 
-    setFilteredFoods(filtered);
+  const handleSearch = (text: string) => {
+    setSearchText(text);
+    setFilteredFoods((prev) => applyFilters(prev, text, selectedCategory));
   };
 
   const handleCategorySelect = (category: string | null) => {
     setSelectedCategory(category);
-
-    const filtered = foods.filter((food) => {
-      const matchesText =
-        food.name.toLowerCase().includes(searchText.toLowerCase()) ||
-        food.vendor.toLowerCase().includes(searchText.toLowerCase());
-
-      const matchesCategory = category
-        ? food.category.toLowerCase() === category.toLowerCase()
-        : true;
-
-      return matchesText && matchesCategory;
-    });
-
-    setFilteredFoods(filtered);
+    setFilteredFoods((prev) => applyFilters(prev, searchText, category));
   };
 
   const categories = [
@@ -181,88 +136,95 @@ export default function BrowseFoodScreen() {
       </View>
 
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.categoriesContainer}
+        style={styles.foodsContainer}
+        contentContainerStyle={{ paddingBottom: 30 }}
+        showsVerticalScrollIndicator={false}
       >
-        <TouchableOpacity
-          key={"all"}
-          style={[
-            styles.categoryCard,
-            selectedCategory === null && { backgroundColor: "#10b981" },
-          ]}
-          onPress={() => handleCategorySelect(null)}
-        >
-          <Text style={styles.categoryIcon}>🍽️</Text>
-          <Text
-            style={[
-              styles.categoryName,
-              selectedCategory === null && { color: "#fff" },
-            ]}
-          >
-            All
-          </Text>
-        </TouchableOpacity>
-
-        {categories.map((category) => (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesContainer}>
           <TouchableOpacity
-            key={category.id}
+            key={"all"}
             style={[
               styles.categoryCard,
-              selectedCategory === category.name && {
-                backgroundColor: "#10b981",
-              },
+              selectedCategory === null && { backgroundColor: "#10b981" },
             ]}
-            onPress={() => handleCategorySelect(category.name)}
+            onPress={() => handleCategorySelect(null)}
           >
-            <Text style={styles.categoryIcon}>{category.icon}</Text>
+            <Text style={styles.categoryIcon}>🍽️</Text>
             <Text
               style={[
                 styles.categoryName,
-                selectedCategory === category.name && { color: "#fff" },
+                selectedCategory === null && { color: "#fff" },
               ]}
             >
-              {category.name}
+              All
             </Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
 
-      {/* View Mode Toggle */}
-      <View style={styles.viewModeContainer}>
-        <Text style={styles.resultCount}>
-          {filteredFoods.length} food item
-          {filteredFoods.length !== 1 ? "s" : ""} found
-          {selectedCategory ? ` in "${selectedCategory}"` : ""}
-        </Text>
+          {categories.map((category) => (
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryCard,
+                selectedCategory === category.name && {
+                  backgroundColor: "#10b981",
+                },
+              ]}
+              onPress={() => handleCategorySelect(category.name)}
+            >
+              <Text style={styles.categoryIcon}>{category.icon}</Text>
+              <Text
+                style={[
+                  styles.categoryName,
+                  selectedCategory === category.name && { color: "#fff" },
+                ]}
+              >
+                {category.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
-        <View style={styles.viewModeToggle}>
-          <TouchableOpacity
-            style={[
-              styles.viewModeButton,
-              viewMode === "grid" && styles.activeViewMode,
-            ]}
-            onPress={() => setViewMode("grid")}
-          >
-            <Grid size={20} color={viewMode === "grid" ? "#fff" : "#6b7280"} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.viewModeButton,
-              viewMode === "list" && styles.activeViewMode,
-            ]}
-            onPress={() => setViewMode("list")}
-          >
-            <List size={20} color={viewMode === "list" ? "#fff" : "#6b7280"} />
-          </TouchableOpacity>
+        {/* View Mode Toggle */}
+        <View style={styles.viewModeContainer}>
+          <Text style={styles.resultCount}>
+            {filteredFoods.length} food item
+            {filteredFoods.length !== 1 ? "s" : ""} found
+            {selectedCategory ? ` in "${selectedCategory}"` : ""}
+          </Text>
+
+          <View style={styles.viewModeToggle}>
+            <TouchableOpacity
+              style={[
+                styles.viewModeButton,
+                viewMode === "grid" && styles.activeViewMode,
+              ]}
+              onPress={() => setViewMode("grid")}
+            >
+              <Grid
+                size={20}
+                color={viewMode === "grid" ? "#fff" : "#6b7280"}
+              />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[
+                styles.viewModeButton,
+                viewMode === "list" && styles.activeViewMode,
+              ]}
+              onPress={() => setViewMode("list")}
+            >
+              <List
+                size={20}
+                color={viewMode === "list" ? "#fff" : "#6b7280"}
+              />
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
 
-      {/* Foods */}
-      <ScrollView
+        {/* Foods */}
+        {/* <ScrollView
         style={styles.foodsContainer}
         showsVerticalScrollIndicator={false}
-      >
+      > */}
         <View
           style={[styles.foodsGrid, viewMode === "list" && styles.foodsList]}
         >
@@ -320,11 +282,11 @@ const styles = StyleSheet.create({
     borderColor: "#10b981",
   },
   categoriesContainer: {
-    paddingVertical: 15,
-    paddingHorizontal: 20,
-    // paddingTop: 0,
-    paddingBottom: 70,
-  },
+  flexDirection: "row",
+  paddingHorizontal: 15,
+  paddingVertical: 15,
+},
+
   categoryCard: {
     alignItems: "center",
     marginRight: 20,
@@ -351,7 +313,6 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
     backgroundColor: "#f9fafb",
     marginTop: 4,
-    
   },
   resultCount: {
     fontSize: 14,

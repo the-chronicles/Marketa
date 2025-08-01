@@ -1,21 +1,27 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Image } from 'react-native';
-import { Camera, Upload, Plus, Minus, Save } from 'lucide-react-native';
+import { db } from '@/config/firebaseConfig';
+import { useUser } from '@/hooks/useUser';
+import { addDoc, collection, doc, setDoc, Timestamp, } from 'firebase/firestore';
+import { Camera, Minus, Plus, Save, Upload } from 'lucide-react-native';
 import { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import Toast from 'react-native-toast-message';
 
 export default function AddFoodScreen() {
   const [foodData, setFoodData] = useState({
     name: '',
     description: '',
     price: '',
-    category: 'Rice',
+    category: 'Grains',
     preparationTime: '15',
     available: true,
   });
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
-  const categories = ['Rice', 'Swallow', 'Soup', 'Snacks', 'Drinks', 'Protein'];
+  const { user } = useUser();
+
+  const categories = ['Grains', 'Swallow', 'Soup', 'Snacks', 'Drinks', 'Protein'];
 
   const handleSnapPhoto = () => {
     // Demo: Set a sample image
@@ -29,11 +35,51 @@ export default function AddFoodScreen() {
     });
   };
 
-  const handleSaveFood = () => {
-    console.log('Saving food:', foodData);
-    // Here you would save to your backend
-    alert('Food item added successfully! 🎉');
+  const handleSaveFood = async () => {
+  if (!user) {
+    Toast.show({ type: 'error', text1: 'You must be logged in as seller' });
+    return;
+  }
+
+  const foodEntry = {
+    name: foodData.name,
+    price: foodData.price,
+    rating: 0,
+    category: foodData.category,
+    vendor: user.businessName || user.name,
+    image: selectedImage || '',
+    sellerId: user.id,
+    createdAt: Timestamp.now(),
   };
+
+  try {
+    // Save to /foods
+    const foodRef = await addDoc(collection(db, 'foods'), foodEntry);
+
+    // Save to /sellers/{sellerId}/menu/{foodId}
+    await setDoc(doc(db, 'sellers', user.id, 'menu', foodRef.id), foodEntry);
+
+    Toast.show({
+      type: 'success',
+      text1: 'Food item saved',
+      text2: 'Now visible to buyers and on your dashboard!',
+    });
+
+    // Optional: clear form
+    setFoodData({
+      name: '',
+      description: '',
+      price: '',
+      category: 'Grains',
+      preparationTime: '15',
+      available: true,
+    });
+    setSelectedImage(null);
+  } catch (err) {
+    console.error('Error saving food:', err);
+    Toast.show({ type: 'error', text1: 'Save failed', text2: 'Try again later' });
+  }
+};
 
   return (
     <SafeAreaView style={styles.container}>

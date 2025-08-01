@@ -94,6 +94,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { useEffect, useState } from 'react';
 
 interface User {
+  businessName: string;
   id: string;
   name: string;
   email: string;

@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@/hooks/useUser';
 import { router } from 'expo-router';
 
+
 export default function ProfileScreen() {
   const { user, logout } = useUser();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);

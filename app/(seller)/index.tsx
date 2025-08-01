@@ -1,27 +1,99 @@
-import { navigate } from 'expo-router/build/global-state/routing';
-import { Camera, Clock, DollarSign, Package, Plus, Settings, Star, TrendingUp } from 'lucide-react-native';
-import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useUser } from "@/hooks/useUser"; // Assuming you have user context
+import { navigate } from "expo-router/build/global-state/routing";
+import { collection, getFirestore, onSnapshot } from "firebase/firestore";
+import {
+  Camera,
+  Clock,
+  DollarSign,
+  Package,
+  Plus,
+  Settings,
+  Star,
+  TrendingUp,
+} from "lucide-react-native";
+import { useEffect, useState } from "react";
+import {
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function SellerDashboardScreen() {
   const stats = [
-    { label: 'Today\'s Revenue', value: '₦25,400', color: '#10b981', icon: DollarSign },
-    { label: 'Orders Today', value: '18', color: '#3b82f6', icon: Package },
-    { label: 'Avg. Rating', value: '4.8★', color: '#f59e0b', icon: Star },
-    { label: 'Response Time', value: '2 mins', color: '#ef4444', icon: Clock },
+    {
+      label: "Today's Revenue",
+      value: "₦25,400",
+      color: "#10b981",
+      icon: DollarSign,
+    },
+    { label: "Orders Today", value: "18", color: "#3b82f6", icon: Package },
+    { label: "Avg. Rating", value: "4.8★", color: "#f59e0b", icon: Star },
+    { label: "Response Time", value: "2 mins", color: "#ef4444", icon: Clock },
   ];
 
   const recentOrders = [
-    { id: 1, food: 'Jollof Rice & Chicken', buyer: 'John Doe', amount: '₦1,500', status: 'Preparing', time: '5 mins ago' },
-    { id: 2, food: 'Fried Rice Special', buyer: 'Jane Smith', amount: '₦1,800', status: 'Ready', time: '10 mins ago' },
-    { id: 3, food: 'Amala & Ewedu', buyer: 'Mike Johnson', amount: '₦1,200', status: 'Delivered', time: '25 mins ago' },
+    {
+      id: 1,
+      food: "Jollof Rice & Chicken",
+      buyer: "John Doe",
+      amount: "₦1,500",
+      status: "Preparing",
+      time: "5 mins ago",
+    },
+    {
+      id: 2,
+      food: "Fried Rice Special",
+      buyer: "Jane Smith",
+      amount: "₦1,800",
+      status: "Ready",
+      time: "10 mins ago",
+    },
+    {
+      id: 3,
+      food: "Amala & Ewedu",
+      buyer: "Mike Johnson",
+      amount: "₦1,200",
+      status: "Delivered",
+      time: "25 mins ago",
+    },
   ];
 
-  const myFoods = [
-    { id: 1, name: 'Jollof Rice & Chicken', price: '₦1,500', available: true, orders: 12, image: 'https://images.pexels.com/photos/2474661/pexels-photo-2474661.jpeg' },
-    { id: 2, name: 'Fried Rice Special', price: '₦1,800', available: true, orders: 8, image: 'https://images.pexels.com/photos/1640772/pexels-photo-1640772.jpeg' },
-    { id: 3, name: 'Amala & Ewedu', price: '₦1,200', available: false, orders: 15, image: 'https://images.pexels.com/photos/1640777/pexels-photo-1640777.jpeg' },
-  ];
+  type Food = {
+    id: string;
+    name?: string;
+    price?: string;
+    image?: string;
+    orders?: number;
+    available?: boolean;
+    [key: string]: any;
+  };
+  const [myFoods, setMyFoods] = useState<Food[]>([]);
+  const db = getFirestore();
+  const { user } = useUser(); // Assuming user is logged in
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const unsubscribe = onSnapshot(
+      collection(db, "sellers", user.id, "menu"),
+      (snapshot) => {
+        const foodItems = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        setMyFoods(foodItems);
+      },
+      (error) => {
+        console.error("Live update error:", error);
+      }
+    );
+
+    return () => unsubscribe(); // Cleanup listener
+  }, [user?.id]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -39,7 +111,10 @@ export default function SellerDashboardScreen() {
 
         {/* Quick Actions */}
         <View style={styles.quickActions}>
-          <TouchableOpacity style={styles.primaryAction} onPress={() => navigate('/add-food')}>
+          <TouchableOpacity
+            style={styles.primaryAction}
+            onPress={() => navigate("/add-food")}
+          >
             <Camera size={24} color="#fff" />
             <Text style={styles.primaryActionText}>📸 Snap & Add Food</Text>
           </TouchableOpacity>
@@ -56,7 +131,9 @@ export default function SellerDashboardScreen() {
             {stats.map((stat, index) => (
               <View key={index} style={styles.statCard}>
                 <stat.icon size={20} color={stat.color} />
-                <Text style={[styles.statValue, { color: stat.color }]}>{stat.value}</Text>
+                <Text style={[styles.statValue, { color: stat.color }]}>
+                  {stat.value}
+                </Text>
                 <Text style={styles.statLabel}>{stat.label}</Text>
               </View>
             ))}
@@ -75,11 +152,18 @@ export default function SellerDashboardScreen() {
             <View key={order.id} style={styles.orderCard}>
               <View style={styles.orderInfo}>
                 <Text style={styles.orderFood}>{order.food}</Text>
-                <Text style={styles.orderBuyer}>by {order.buyer} • {order.time}</Text>
+                <Text style={styles.orderBuyer}>
+                  by {order.buyer} • {order.time}
+                </Text>
               </View>
               <View style={styles.orderRight}>
                 <Text style={styles.orderAmount}>{order.amount}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(order.status) }]}>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    { backgroundColor: getStatusColor(order.status) },
+                  ]}
+                >
                   <Text style={styles.statusText}>{order.status}</Text>
                 </View>
               </View>
@@ -96,23 +180,43 @@ export default function SellerDashboardScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.foodsGrid}>
-            {myFoods.map((food) => (
-              <View key={food.id} style={styles.foodCard}>
-                <Image source={{ uri: food.image }} style={styles.foodImage} />
-                <View style={styles.foodInfo}>
-                  <Text style={styles.foodName}>{food.name}</Text>
-                  <Text style={styles.foodPrice}>{food.price}</Text>
-                  <View style={styles.foodMeta}>
-                    <Text style={styles.ordersCount}>{food.orders} orders today</Text>
-                    <View style={[styles.availabilityBadge, { backgroundColor: food.available ? '#10b981' : '#ef4444' }]}>
-                      <Text style={styles.availabilityText}>
-                        {food.available ? 'Available' : 'Sold Out'}
+            {myFoods.length === 0 ? (
+              <Text style={styles.emptyStateText}>
+                You haven&apos;t added any food yet. 📭
+              </Text>
+            ) : (
+              myFoods.map((food) => (
+                <View key={food.id} style={styles.foodCard}>
+                  <Image
+                    source={{ uri: food.image }}
+                    style={styles.foodImage}
+                  />
+                  <View style={styles.foodInfo}>
+                    <Text style={styles.foodName}>{food.name}</Text>
+                    <Text style={styles.foodPrice}>₦{food.price}</Text>
+                    <View style={styles.foodMeta}>
+                      <Text style={styles.ordersCount}>
+                        {food.orders || 0} orders today
                       </Text>
+                      <View
+                        style={[
+                          styles.availabilityBadge,
+                          {
+                            backgroundColor: food.available
+                              ? "#10b981"
+                              : "#ef4444",
+                          },
+                        ]}
+                      >
+                        <Text style={styles.availabilityText}>
+                          {food.available ? "Available" : "Sold Out"}
+                        </Text>
+                      </View>
                     </View>
                   </View>
                 </View>
-              </View>
-            ))}
+              ))
+            )}
           </View>
         </View>
 
@@ -121,8 +225,12 @@ export default function SellerDashboardScreen() {
           <TouchableOpacity style={styles.insightsCard}>
             <TrendingUp size={24} color="#10b981" />
             <View style={styles.insightsInfo}>
-              <Text style={styles.insightsTitle}>📊 View Detailed Analytics</Text>
-              <Text style={styles.insightsSubtitle}>Sales trends, popular items & customer insights</Text>
+              <Text style={styles.insightsTitle}>
+                📊 View Detailed Analytics
+              </Text>
+              <Text style={styles.insightsSubtitle}>
+                Sales trends, popular items & customer insights
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -133,100 +241,104 @@ export default function SellerDashboardScreen() {
 
 function getStatusColor(status: string) {
   switch (status) {
-    case 'Preparing': return '#f59e0b';
-    case 'Ready': return '#10b981';
-    case 'Delivered': return '#3b82f6';
-    default: return '#6b7280';
+    case "Preparing":
+      return "#f59e0b";
+    case "Ready":
+      return "#10b981";
+    case "Delivered":
+      return "#3b82f6";
+    default:
+      return "#6b7280";
   }
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: 20,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: "#e5e7eb",
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
   },
   subtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 4,
   },
   settingsButton: {
     padding: 8,
   },
   quickActions: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: 20,
     gap: 12,
   },
   primaryAction: {
     flex: 2,
-    backgroundColor: '#10b981',
+    backgroundColor: "#10b981",
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
   primaryActionText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 8,
   },
   secondaryAction: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     borderWidth: 1,
-    borderColor: '#10b981',
+    borderColor: "#10b981",
   },
   secondaryActionText: {
-    color: '#10b981',
+    color: "#10b981",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
     marginLeft: 4,
   },
   statsContainer: {
     padding: 20,
-    backgroundColor: '#f9fafb',
+    backgroundColor: "#f9fafb",
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "bold",
+    color: "#000",
     marginBottom: 16,
   },
   statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   statCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
+    width: "48%",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
+    alignItems: "center",
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -234,35 +346,35 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: "bold",
     marginVertical: 4,
   },
   statLabel: {
     fontSize: 12,
-    color: '#6b7280',
-    textAlign: 'center',
+    color: "#6b7280",
+    textAlign: "center",
   },
   section: {
     padding: 20,
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   seeAll: {
-    color: '#10b981',
+    color: "#10b981",
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   orderCard: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -273,21 +385,21 @@ const styles = StyleSheet.create({
   },
   orderFood: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   orderBuyer: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 4,
   },
   orderRight: {
-    alignItems: 'flex-end',
+    alignItems: "flex-end",
   },
   orderAmount: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#10b981',
+    fontWeight: "bold",
+    color: "#10b981",
   },
   statusBadge: {
     paddingHorizontal: 8,
@@ -296,28 +408,28 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   statusText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   foodsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
   },
   foodCard: {
-    width: '48%',
-    backgroundColor: '#ffffff',
+    width: "48%",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     marginBottom: 16,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
   },
   foodImage: {
-    width: '100%',
+    width: "100%",
     height: 100,
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
@@ -327,24 +439,31 @@ const styles = StyleSheet.create({
   },
   foodName: {
     fontSize: 14,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
     marginBottom: 4,
   },
   foodPrice: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#10b981',
+    fontWeight: "bold",
+    color: "#10b981",
     marginBottom: 8,
   },
   foodMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
   },
+  emptyStateText: {
+    textAlign: "center",
+    color: "#6b7280",
+    fontSize: 14,
+    marginTop: 12,
+  },
+
   ordersCount: {
     fontSize: 12,
-    color: '#6b7280',
+    color: "#6b7280",
   },
   availabilityBadge: {
     paddingHorizontal: 6,
@@ -352,17 +471,17 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   availabilityText: {
-    color: '#ffffff',
+    color: "#ffffff",
     fontSize: 10,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   insightsCard: {
-    flexDirection: 'row',
-    backgroundColor: '#ffffff',
+    flexDirection: "row",
+    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
-    alignItems: 'center',
-    shadowColor: '#000',
+    alignItems: "center",
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -373,12 +492,12 @@ const styles = StyleSheet.create({
   },
   insightsTitle: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000',
+    fontWeight: "600",
+    color: "#000",
   },
   insightsSubtitle: {
     fontSize: 14,
-    color: '#6b7280',
+    color: "#6b7280",
     marginTop: 4,
   },
 });
