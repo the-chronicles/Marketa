@@ -7,14 +7,26 @@ import { Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Toast from 'react-native-toast-message';
 
+
+type Food = {
+  name: string;
+  description: string;
+  price: string;
+  category: string;
+  preparationTime: string;
+  available: boolean;
+  isFeatured: boolean; // <-- Add this line
+};
+
 export default function AddFoodScreen() {
-  const [foodData, setFoodData] = useState({
+  const [foodData, setFoodData] = useState<Food>({
     name: '',
     description: '',
     price: '',
     category: 'Grains',
     preparationTime: '15',
     available: true,
+    isFeatured: false, // <-- Initialize the new field
   });
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -75,6 +87,7 @@ export default function AddFoodScreen() {
       category: 'Grains',
       preparationTime: '15',
       available: true,
+      isFeatured: false, 
     });
     setSelectedImage(null);
   } catch (err) {
@@ -216,6 +229,24 @@ export default function AddFoodScreen() {
             >
               <Text style={[styles.toggleText, foodData.available && styles.toggleActiveText]}>
                 {foodData.available ? 'ON' : 'OFF'}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Featured Toggle Section */}
+        <View style={styles.section}>
+          <View style={styles.availabilityContainer}>
+            <View>
+              <Text style={styles.availabilityTitle}>Mark as Featured</Text>
+              <Text style={styles.availabilitySubtitle}>Highlight this food on buyer screens</Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.toggleButton, foodData.isFeatured && styles.toggleActive]}
+              onPress={() => setFoodData({ ...foodData, isFeatured: !foodData.isFeatured })}
+            >
+              <Text style={[styles.toggleText, foodData.isFeatured && styles.toggleActiveText]}>
+                {foodData.isFeatured ? 'YES' : 'NO'}
               </Text>
             </TouchableOpacity>
           </View>

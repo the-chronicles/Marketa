@@ -92,6 +92,7 @@ export default function AuthScreen() {
         email: userCredential.user.email || "",
         role: userDataFromFirestore.role || "buyer",
         verified: userCredential.user.emailVerified,
+        businessName: userDataFromFirestore.businessName || "",
       });
 
       Toast.show({

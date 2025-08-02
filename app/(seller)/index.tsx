@@ -70,6 +70,7 @@ export default function SellerDashboardScreen() {
     orders?: number;
     available?: boolean;
     [key: string]: any;
+    isFeatured?: boolean; 
   };
   const [myFoods, setMyFoods] = useState<Food[]>([]);
   const db = getFirestore();
