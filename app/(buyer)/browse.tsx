@@ -1,3 +1,4 @@
+import { useRouter } from "expo-router";
 import { collection, getFirestore, onSnapshot } from "firebase/firestore";
 import {
   Filter,
@@ -26,6 +27,8 @@ export default function BrowseFoodScreen() {
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filteredFoods, setFilteredFoods] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const router = useRouter();
 
   const LoadingSkeleton = () => (
     <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}>
@@ -89,6 +92,21 @@ export default function BrowseFoodScreen() {
     setFilteredFoods((prev) => applyFilters(prev, searchText, category));
   };
 
+  const handleAddToCart = (food: any) => {
+    console.log("Added to cart:", food.name);
+    // TODO: Save to Firebase or context
+  };
+
+  const handleAddToWishlist = (food: any) => {
+    console.log("Added to wishlist:", food.name);
+    // TODO: Save to wishlist collection
+  };
+
+  const handleRateFood = (food: any) => {
+    console.log("Rate food:", food.name);
+    // TODO: Open a rating modal or navigate to a rating screen
+  };
+
   const categories = [
     { id: 1, name: "Grains", icon: "🍚" },
     { id: 2, name: "Swallow", icon: "🍲" },
@@ -101,6 +119,7 @@ export default function BrowseFoodScreen() {
     <TouchableOpacity
       key={food.id}
       style={[styles.foodCard, viewMode === "list" && styles.listCard]}
+      onPress={() => router.push(`/product/${food.id}`)} // OPEN DETAIL
     >
       <Image
         source={{ uri: food.image }}
@@ -115,12 +134,20 @@ export default function BrowseFoodScreen() {
           <Text style={styles.category}>• {food.category}</Text>
         </View>
         <Text style={styles.foodPrice}>{food.price}</Text>
+
         <View style={styles.foodActions}>
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={() => handleAddToCart(food)}
+          >
             <ShoppingCart size={16} color="#fff" />
             <Text style={styles.addToCartText}>Add to Cart</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.wishlistButton}>
+
+          <TouchableOpacity
+            style={styles.wishlistButton}
+            onPress={() => handleAddToWishlist(food)}
+          >
             <Heart size={16} color="#10b981" />
           </TouchableOpacity>
         </View>

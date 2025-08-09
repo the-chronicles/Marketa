@@ -149,8 +149,8 @@ export default function AuthScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.logo}>🍕 Omnimarketa</Text>
-        <Text style={styles.subtitle}>University of Ibadan Food Delivery</Text>
+        <Text style={styles.logo}>Omnimarketa</Text>
+        <Text style={styles.subtitle}>Aim to be World Leading Marketplace for food!</Text>
       </View>
 
       <View style={styles.form}>

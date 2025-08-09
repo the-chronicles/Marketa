@@ -61,6 +61,8 @@ export default function AddFoodScreen() {
   vendor: user.businessName || user.name,
   image: selectedImage || '',
   sellerId: user.id,
+  vendorUid: user.id,           // ✅ add this (explicit)
+  // vendorAvatar: user.photoURL ?? null, // optional
   createdAt: Timestamp.now(),
   isFeatured: true, // ✅ Added field
 };
@@ -191,7 +193,7 @@ export default function AddFoodScreen() {
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Preparation Time (minutes)</Text>
+            <Text style={styles.inputLabel}>Delivery Time (minutes)</Text>
             <View style={styles.timeContainer}>
               <TouchableOpacity
                 style={styles.timeButton}

@@ -1,0 +1,110 @@
+// app/chat/[id].tsx
+import { Stack, useLocalSearchParams } from "expo-router";
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform,
+  FlatList,
+  StyleSheet,
+} from "react-native";
+import { Send } from "lucide-react-native";
+import { useMessages } from "@/hooks/useMessages";
+import { useState, useEffect } from "react";
+import { auth, db } from "@/config/firebaseConfig";
+import { doc, getDoc } from "firebase/firestore";
+
+export default function ChatRoom() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { messages, send, sending } = useMessages(id);
+  const [text, setText] = useState("");
+  const [title, setTitle] = useState("Chat");
+  const me = auth.currentUser?.uid;
+
+  useEffect(() => {
+    getDoc(doc(db, "conversations", String(id))).then((snap) => {
+      const data = snap.data() as any;
+      const other = Object.entries(data?.participants ?? {}).find(
+        ([uid]) => uid !== me
+      )?.[1] as any;
+      setTitle(other?.displayName || "Chat");
+    });
+  }, [id]);
+
+  const renderItem = ({ item }: any) => {
+    const mine = item.senderId === me;
+    return (
+      <View
+        style={[styles.bubble, mine ? styles.bubbleMe : styles.bubbleOther]}
+      >
+        {!!item.text && (
+          <Text style={[styles.text, mine ? styles.textMe : styles.textOther]}>
+            {item.text}
+          </Text>
+        )}
+      </View>
+    );
+  };
+
+  return (
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.select({ ios: "padding" })}
+    >
+      <Stack.Screen options={{ title }} />
+      <FlatList
+        data={messages}
+        keyExtractor={(m) => m.id}
+        renderItem={renderItem}
+        contentContainerStyle={{ padding: 16, gap: 8 }}
+      />
+      <View style={styles.inputBar}>
+        <TextInput
+          style={styles.input}
+          placeholder="Type a message"
+          value={text}
+          onChangeText={setText}
+          onSubmitEditing={() => {
+            send(text);
+            setText("");
+          }}
+        />
+        <TouchableOpacity
+          disabled={sending || !text.trim()}
+          onPress={() => {
+            send(text);
+            setText("");
+          }}
+        >
+          <Send size={22} />
+        </TouchableOpacity>
+      </View>
+    </KeyboardAvoidingView>
+  );
+}
+
+const styles = StyleSheet.create({
+  bubble: { maxWidth: "75%", padding: 10, borderRadius: 12 },
+  bubbleMe: { alignSelf: "flex-end", backgroundColor: "#10b981" },
+  bubbleOther: { alignSelf: "flex-start", backgroundColor: "#f3f4f6" },
+  text: { fontSize: 15 },
+  textMe: { color: "white" },
+  textOther: { color: "#111827" },
+  inputBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    padding: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderColor: "#e5e7eb",
+  },
+  input: {
+    flex: 1,
+    backgroundColor: "#f9fafb",
+    borderRadius: 24,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+  },
+});
