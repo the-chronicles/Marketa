@@ -1,6 +1,12 @@
 import { useUser } from "@/hooks/useUser";
 import * as Location from "expo-location";
-import { collection, getFirestore, onSnapshot, query, where } from "firebase/firestore";
+import {
+  collection,
+  getFirestore,
+  onSnapshot,
+  query,
+  where,
+} from "firebase/firestore";
 import {
   Bell,
   Clock,
@@ -22,7 +28,6 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
-
 export default function BuyerHomeScreen() {
   const { user } = useUser();
   const [locationName, setLocationName] = useState("University of Ibadan");
@@ -43,31 +48,27 @@ export default function BuyerHomeScreen() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-  const db = getFirestore();
-  const q = query(
-    collection(db, "foods"),
-    where("isFeatured", "==", true)
-  );
+    const db = getFirestore();
+    const q = query(collection(db, "foods"), where("isFeatured", "==", true));
 
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    const fetched = snapshot.docs.map((doc) => ({
-      ...(doc.data() as Food),
-      id: doc.id,
-    }));
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const fetched = snapshot.docs.map((doc) => ({
+        ...(doc.data() as Food),
+        id: doc.id,
+      }));
 
-    const top5 = fetched
-      .filter((item) => typeof item.rating === "number")
-      .sort((a, b) => Number(b.rating) - Number(a.rating))
-      .slice(0, 5);
+      const top5 = fetched
+        .filter((item) => typeof item.rating === "number")
+        .sort((a, b) => Number(b.rating) - Number(a.rating))
+        .slice(0, 5);
 
-    setFeaturedFood(top5);
-    setFilteredFood(top5);
-    setIsLoading(false);
-  });
+      setFeaturedFood(top5);
+      setFilteredFood(top5);
+      setIsLoading(false);
+    });
 
-  return () => unsubscribe();
-}, []);
-
+    return () => unsubscribe();
+  }, []);
 
   const getLocation = async () => {
     let { status } = await Location.requestForegroundPermissionsAsync();
@@ -210,6 +211,22 @@ export default function BuyerHomeScreen() {
               </View>
             )}
           </ScrollView>
+        </View>
+
+       <View style={styles.orderStatusCard}>
+          <View style={styles.orderStatusHeader}>
+            <Text style={styles.orderStatusTitle}>Recent Order</Text>
+            <Text style={styles.orderStatusTime}>15 mins ago</Text>
+          </View>
+          <Text style={styles.orderStatusFood}>
+            I want to cook....
+          </Text>
+          <View style={styles.orderStatusProgress}>
+            <View style={styles.progressBar}>
+              <View style={[styles.progressFill, { width: "60%" }]} />
+            </View>
+            <Text style={styles.orderStatusText}>Being prepared...</Text>
+          </View>
         </View>
 
         {/* Quick Actions */}

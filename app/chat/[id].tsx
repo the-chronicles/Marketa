@@ -1,20 +1,20 @@
 // app/chat/[id].tsx
+import { auth, db } from "@/config/firebaseConfig";
+import { useMessages } from "@/hooks/useMessages";
 import { Stack, useLocalSearchParams } from "expo-router";
+import { doc, getDoc } from "firebase/firestore";
+import { Send } from "lucide-react-native";
+import { useEffect, useState } from "react";
 import {
-  View,
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
-  KeyboardAvoidingView,
-  Platform,
-  FlatList,
-  StyleSheet,
+  View,
 } from "react-native";
-import { Send } from "lucide-react-native";
-import { useMessages } from "@/hooks/useMessages";
-import { useState, useEffect } from "react";
-import { auth, db } from "@/config/firebaseConfig";
-import { doc, getDoc } from "firebase/firestore";
 
 export default function ChatRoom() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -52,6 +52,8 @@ export default function ChatRoom() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.select({ ios: "padding" })}
+      keyboardVerticalOffset={Platform.select({ ios: 100, android: 0 })}
+
     >
       <Stack.Screen options={{ title }} />
       <FlatList

@@ -3,23 +3,23 @@ import { auth, db } from "@/config/firebaseConfig";
 import { openOrCreateConversation } from "@/lib/chat";
 import { Stack, useLocalSearchParams, useRouter } from "expo-router";
 import {
-    addDoc,
-    collection,
-    doc,
-    getDoc,
-    serverTimestamp,
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { MessageSquare, ShoppingCart } from "lucide-react-native";
 import { useEffect, useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Alert,
-    Image,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 
 type Food = {
@@ -96,45 +96,52 @@ export default function ProductDetailScreen() {
   }
 
   async function contactSeller() {
-  const me = auth.currentUser;
-  if (!me || !food) {
-    Alert.alert('Login required', 'Please sign in to chat with the seller.');
-    return;
+    const me = auth.currentUser;
+    if (!me || !food) {
+      Alert.alert("Login required", "Please sign in to chat with the seller.");
+      return;
+    }
+
+    // Prefer vendorUid, fallback to sellerId
+    const sellerUid = (food as any).vendorUid || (food as any).sellerId;
+    if (!sellerUid) {
+      Alert.alert(
+        "Missing seller",
+        "This product is missing vendorUid/sellerId."
+      );
+      return;
+    }
+
+    try {
+      const conversationId = await openOrCreateConversation(sellerUid, {
+        [me.uid]: {
+          role: "buyer",
+          displayName: me.displayName ?? "You",
+          photoURL: me.photoURL ?? null,
+        },
+        [sellerUid]: {
+          role: "seller",
+          displayName: food.vendor ?? "Seller",
+          photoURL: (food as any).vendorAvatar ?? null,
+        },
+      });
+
+      await addDoc(
+        collection(db, "conversations", conversationId, "messages"),
+        {
+          text: `Hi ${food.vendor ?? "there"}, I’m interested in "${
+            food.name
+          }"`,
+          senderId: me.uid,
+          createdAt: serverTimestamp(),
+        }
+      );
+
+      router.push(`/chat/${conversationId}`);
+    } catch (e) {
+      Alert.alert("Error", "Could not start the chat.");
+    }
   }
-
-  // Prefer vendorUid, fallback to sellerId
-  const sellerUid = (food as any).vendorUid || (food as any).sellerId;
-  if (!sellerUid) {
-    Alert.alert('Missing seller', 'This product is missing vendorUid/sellerId.');
-    return;
-  }
-
-  try {
-    const conversationId = await openOrCreateConversation(sellerUid, {
-      [me.uid]: {
-        role: 'buyer',
-        displayName: me.displayName ?? 'You',
-        photoURL: me.photoURL ?? null,
-      },
-      [sellerUid]: {
-        role: 'seller',
-        displayName: food.vendor ?? 'Seller',
-        photoURL: (food as any).vendorAvatar ?? null,
-      },
-    });
-
-    await addDoc(collection(db, 'conversations', conversationId, 'messages'), {
-      text: `Hi ${food.vendor ?? 'there'}, I’m interested in "${food.name}"`,
-      senderId: me.uid,
-      createdAt: serverTimestamp(),
-    });
-
-    router.push(`/chat/${conversationId}`);
-  } catch (e) {
-    Alert.alert('Error', 'Could not start the chat.');
-  }
-}
-
 
   if (loading) {
     return (
@@ -177,6 +184,12 @@ export default function ProductDetailScreen() {
           <Text style={styles.desc}>{food.description}</Text>
         )}
 
+        <View style={{ marginTop: 16 }}>
+          <Text>
+            Related Products will be shown here in the future.
+          </Text>
+        </View>
+
         <View style={styles.actions}>
           <TouchableOpacity
             style={[styles.btn, styles.cartBtn]}
@@ -216,7 +229,7 @@ const styles = StyleSheet.create({
   price: { fontSize: 18, fontWeight: "700", color: "#10b981" },
   category: { fontSize: 12, color: "#6b7280" },
   desc: { marginTop: 12, fontSize: 14, color: "#374151", lineHeight: 20 },
-  actions: { marginTop: 16, flexDirection: "row", gap: 12 },
+  actions: { marginTop: 16, flexDirection: "row", gap: 12, alignItems: "flex-end", },
   btn: {
     flex: 1,
     height: 44,

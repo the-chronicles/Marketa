@@ -1,9 +1,9 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
-import { User, Settings, CreditCard, MapPin, Bell, Shield, LogOut, CreditCard as Edit, Star, Award } from 'lucide-react-native';
-import { useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUser } from '@/hooks/useUser';
 import { router } from 'expo-router';
+import { Bell, CreditCard, CreditCard as Edit, LogOut, MapPin, Settings, Shield, Star } from 'lucide-react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, Switch, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 
 export default function ProfileScreen() {
@@ -111,6 +111,20 @@ export default function ProfileScreen() {
                 thumbColor={locationEnabled ? '#ffffff' : '#f4f3f4'}
               />
             </View>
+  
+            <View style={styles.settingRow}>
+              <View style={styles.settingLeft}>
+                <MapPin size={20} color="#10b981" />
+                <Text style={styles.settingText}>Switch to Seller</Text>
+              </View>
+              <Switch
+                value={locationEnabled}
+                onValueChange={setLocationEnabled}
+                trackColor={{ false: '#e5e7eb', true: '#10b981' }}
+                thumbColor={locationEnabled ? '#ffffff' : '#f4f3f4'}
+              />
+            </View>
+  
           </View>
         </View>
 
