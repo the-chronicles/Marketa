@@ -1,6 +1,7 @@
 // app/chat/[id].tsx
 import { auth, db } from "@/config/firebaseConfig";
 import { useMessages } from "@/hooks/useMessages";
+import { useHeaderHeight } from "@react-navigation/elements";
 import { Stack, useLocalSearchParams } from "expo-router";
 import { doc, getDoc } from "firebase/firestore";
 import { Send } from "lucide-react-native";
@@ -9,12 +10,14 @@ import {
   FlatList,
   KeyboardAvoidingView,
   Platform,
+  // SafeAreaView,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function ChatRoom() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,6 +25,10 @@ export default function ChatRoom() {
   const [text, setText] = useState("");
   const [title, setTitle] = useState("Chat");
   const me = auth.currentUser?.uid;
+
+  // const insets = useSafeAreaInsets();
+  const headerHeight = useHeaderHeight();
+  // const listRef = useRef<FlatList>(null);
 
   useEffect(() => {
     getDoc(doc(db, "conversations", String(id))).then((snap) => {
@@ -49,41 +56,46 @@ export default function ChatRoom() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.select({ ios: "padding" })}
-      keyboardVerticalOffset={Platform.select({ ios: 100, android: 0 })}
-
-    >
-      <Stack.Screen options={{ title }} />
-      <FlatList
-        data={messages}
-        keyExtractor={(m) => m.id}
-        renderItem={renderItem}
-        contentContainerStyle={{ padding: 16, gap: 8 }}
-      />
-      <View style={styles.inputBar}>
-        <TextInput
-          style={styles.input}
-          placeholder="Type a message"
-          value={text}
-          onChangeText={setText}
-          onSubmitEditing={() => {
-            send(text);
-            setText("");
-          }}
+    <SafeAreaView style={{ flex: 1, backgroundColor: "#ffffff" }}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.select({ ios: "padding", android: "height" })}
+        // Make room for the native header on iOS; Android is handled by "height" + resize (see app.json step below)
+        keyboardVerticalOffset={Platform.select({
+          ios: headerHeight,
+          android: 0,
+        })}
+      >
+        <Stack.Screen options={{ title }} />
+        <FlatList
+          data={messages}
+          keyExtractor={(m) => m.id}
+          renderItem={renderItem}
+          contentContainerStyle={{ padding: 16, gap: 8 }}
         />
-        <TouchableOpacity
-          disabled={sending || !text.trim()}
-          onPress={() => {
-            send(text);
-            setText("");
-          }}
-        >
-          <Send size={22} />
-        </TouchableOpacity>
-      </View>
-    </KeyboardAvoidingView>
+        <View style={styles.inputBar}>
+          <TextInput
+            style={styles.input}
+            placeholder="Type a message"
+            value={text}
+            onChangeText={setText}
+            onSubmitEditing={() => {
+              send(text);
+              setText("");
+            }}
+          />
+          <TouchableOpacity
+            disabled={sending || !text.trim()}
+            onPress={() => {
+              send(text);
+              setText("");
+            }}
+          >
+            <Send size={22} />
+          </TouchableOpacity>
+        </View>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 

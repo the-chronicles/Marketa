@@ -9,6 +9,8 @@ import {
 import { doc, getDoc, getFirestore, setDoc } from "firebase/firestore";
 import { useState } from "react";
 import {
+  KeyboardAvoidingView,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -148,6 +150,8 @@ export default function AuthScreen() {
   };
   return (
     <SafeAreaView style={styles.container}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <KeyboardAvoidingView>
       <View style={styles.header}>
         <Text style={styles.logo}>Omnimarketa</Text>
         <Text style={styles.subtitle}>Aim to be World Leading Marketplace for food!</Text>
@@ -245,6 +249,8 @@ export default function AuthScreen() {
           </Text>
         </View>
       </View>
+      </KeyboardAvoidingView>
+      </ScrollView>
     </SafeAreaView>
   );
 }

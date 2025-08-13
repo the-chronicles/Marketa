@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Gamepad2, House, MessageCircle, ShoppingCart, User } from 'lucide-react-native';
-import { SafeAreaView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+// import { SafeAreaView } from 'react-native';
 
 export default function BuyerTabLayout() {
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
+    // <SafeAreaView style={{ flex: 1, backgroundColor: '#ffffff' }}>
     <Tabs
       screenOptions={{
         headerShown: false,
@@ -73,6 +74,6 @@ export default function BuyerTabLayout() {
         }}
       />
     </Tabs>
-    </SafeAreaView>
+    // </SafeAreaView>
   );
 }
